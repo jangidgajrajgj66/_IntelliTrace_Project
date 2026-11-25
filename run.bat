@@ -16,8 +16,8 @@ setlocal enabledelayedexpansion
 title Autonomous AI Incident Investigator - Production SRE Agent
 
 echo ============================================================================
-echo        AUTONOMOUS AI INCIDENT INVESTIGATOR (Production SRE Agent)
-echo        Powered by: LangGraph StateGraph • FastAPI • LLM Reasoning
+echo        INTELLITRACE — Autonomous SRE & Incident Intelligence Platform
+echo        Author: Gajraj Jangid • LangGraph • FastAPI • LLM Reasoning
 echo ============================================================================
 echo.
 
@@ -96,8 +96,8 @@ REM ----------------------------------------------------------------------------
 :menu
 cls
 echo ============================================================================
-echo        AUTONOMOUS AI INCIDENT INVESTIGATOR (Production SRE Agent)
-echo        Powered by: LangGraph StateGraph • FastAPI • LLM Reasoning
+echo        INTELLITRACE — Autonomous SRE & Incident Intelligence Platform
+echo        Author: Gajraj Jangid • LangGraph • FastAPI • LLM Reasoning
 echo ============================================================================
 echo  [1] Run All Scenarios & Full LangGraph Evaluation (CLI Scorecard)
 echo  [2] Start Full Stack (FastAPI Server + Streamlit Web Dashboard)

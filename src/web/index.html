@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IntelliTrace — Autonomous SRE &amp; Incident Intelligence</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Top Command Bar -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-logo" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <rect x="1.5" y="1.5" width="25" height="25" rx="7" fill="url(#itGrad)" fill-opacity="0.14" stroke="url(#itGrad)" stroke-width="1.5"/>
+            <path d="M5.5 14.5H9.2L11.6 8.5L15.4 19.5L18.2 12.2L20.1 14.5H22.5" stroke="#22d3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <defs>
+              <linearGradient id="itGrad" x1="2" y1="2" x2="26" y2="26" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#22d3ee"/>
+                <stop offset="1" stop-color="#6366f1"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-name">IntelliTrace <span class="brand-tag">SRE</span></div>
+          <div class="brand-sub">Autonomous Incident Intelligence &amp; Self-Healing</div>
+        </div>
+      </div>
+
+      <div class="topbar-status">
+        <div id="system-health-pill" class="status-pill nominal">
+          <span class="pulse-dot"></span>
+          <span id="system-health-text">NOMINAL</span>
+        </div>
+        <div class="meta-chip" title="Orchestration Engine">
+          <span class="meta-label">Orchestrator</span>
+          <span class="meta-val">LangGraph</span>
+        </div>
+        <div class="meta-chip" title="Active Reasoning Engine">
+          <span class="meta-label">Reasoner</span>
+          <span id="llm-badge" class="meta-val">auto</span>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <button id="btn-live-toggle" class="btn btn-ghost" title="Pause/Resume live telemetry polling">
+          <span id="live-dot" class="live-dot active"></span> Live: ON
+        </button>
+        <button id="btn-tick" class="btn btn-ghost" title="Advance telemetry by 1 cycle">+ Tick</button>
+        <button id="btn-reset" class="btn btn-secondary">Reset Baseline</button>
+        <a href="/docs" target="_blank" rel="noopener" class="btn btn-outline">API Docs ↗</a>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- KPI Telemetry Strip -->
+      <section class="kpi-grid" aria-label="Live Telemetry KPIs">
+        <article class="kpi-card" id="kpi-card-resp">
+          <div class="kpi-head">
+            <span class="kpi-label">P95 Response Time</span>
+            <span class="kpi-sla" id="sla-resp">SLA &le; 300ms</span>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-value" id="val-resp">--</span>
+            <span class="kpi-unit">ms</span>
+          </div>
+          <div class="kpi-bar"><div class="kpi-bar-fill" id="bar-resp"></div></div>
+        </article>
+
+        <article class="kpi-card" id="kpi-card-err">
+          <div class="kpi-head">
+            <span class="kpi-label">Error Rate</span>
+            <span class="kpi-sla" id="sla-err">SLA &le; 5.0%</span>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-value" id="val-err">--</span>
+            <span class="kpi-unit">%</span>
+          </div>
+          <div class="kpi-bar"><div class="kpi-bar-fill" id="bar-err"></div></div>
+        </article>
+
+        <article class="kpi-card" id="kpi-card-queue">
+          <div class="kpi-head">
+            <span class="kpi-label">Queue Backlog</span>
+            <span class="kpi-sla" id="sla-queue">SLA &le; 25</span>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-value" id="val-queue">--</span>
+            <span class="kpi-unit">reqs</span>
+          </div>
+          <div class="kpi-bar"><div class="kpi-bar-fill" id="bar-queue"></div></div>
+        </article>
+
+        <article class="kpi-card">
+          <div class="kpi-head">
+            <span class="kpi-label">Throughput</span>
+            <span class="kpi-sla">Rolling RPS</span>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-value" id="val-rps">--</span>
+            <span class="kpi-unit">req/s</span>
+          </div>
+          <div class="kpi-sub" id="val-cpu-mem">CPU --% • RAM --%</div>
+        </article>
+
+        <article class="kpi-card">
+          <div class="kpi-head">
+            <span class="kpi-label">Worker Pool</span>
+            <span class="kpi-sla" id="val-config-ver">v2.4.1</span>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-value" id="val-workers">--</span>
+            <span class="kpi-unit">threads</span>
+          </div>
+          <div class="kpi-sub" id="val-active-scenario">No active fault</div>
+        </article>
+      </section>
+
+      <!-- Live Telemetry Charts -->
+      <section class="charts-grid">
+        <div class="panel chart-panel">
+          <div class="panel-head">
+            <h3>Response Time (ms)</h3>
+            <span class="badge-sla">Threshold: 300ms</span>
+          </div>
+          <canvas id="chart-resp" height="150"></canvas>
+        </div>
+        <div class="panel chart-panel">
+          <div class="panel-head">
+            <h3>Error Rate (%)</h3>
+            <span class="badge-sla">Threshold: 5.0%</span>
+          </div>
+          <canvas id="chart-err" height="150"></canvas>
+        </div>
+        <div class="panel chart-panel">
+          <div class="panel-head">
+            <h3>Queue Backlog (reqs)</h3>
+            <span class="badge-sla">Threshold: 25 reqs</span>
+          </div>
+          <canvas id="chart-queue" height="150"></canvas>
+        </div>
+      </section>
+
+      <!-- LangGraph Pipeline Visualizer -->
+      <section class="panel pipeline-panel">
+        <div class="panel-head">
+          <div>
+            <h3>LangGraph State Machine Pipeline</h3>
+            <p class="panel-desc">Stateful, auditable autonomous triage flow with bounded remediation retries</p>
+          </div>
+          <span class="badge-neutral" id="pipeline-status-badge">Idle — Monitoring</span>
+        </div>
+        <div class="pipeline-track" id="pipeline-track">
+          <div class="pipe-node" data-station="DETECT">
+            <div class="pipe-step">01</div>
+            <div class="pipe-title">Detect</div>
+            <div class="pipe-sub">SLA Anomaly</div>
+          </div>
+          <div class="pipe-arrow">&rarr;</div>
+          <div class="pipe-node" data-station="INVESTIGATE">
+            <div class="pipe-step">02</div>
+            <div class="pipe-title">Investigate</div>
+            <div class="pipe-sub">LLM Root Cause</div>
+          </div>
+          <div class="pipe-arrow">&rarr;</div>
+          <div class="pipe-node" data-station="SAFETY_EVAL">
+            <div class="pipe-step">03</div>
+            <div class="pipe-title">Safety Eval</div>
+            <div class="pipe-sub">Whitelist &amp; Budget</div>
+          </div>
+          <div class="pipe-arrow">&rarr;</div>
+          <div class="pipe-node" data-station="REMEDIATE">
+            <div class="pipe-step">04</div>
+            <div class="pipe-title">Remediate</div>
+            <div class="pipe-sub">Safe Action</div>
+          </div>
+          <div class="pipe-arrow">&rarr;</div>
+          <div class="pipe-node" data-station="VERIFY">
+            <div class="pipe-step">05</div>
+            <div class="pipe-title">Verify</div>
+            <div class="pipe-sub">Post-Fix SLA</div>
+          </div>
+          <div class="pipe-arrow">&rarr;</div>
+          <div class="pipe-node pipe-node-esc" data-station="ESCALATE">
+            <div class="pipe-step">06</div>
+            <div class="pipe-title">Escalate</div>
+            <div class="pipe-sub">Human Handover</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Control & Investigation Workspace -->
+      <section class="workspace-grid">
+        <!-- Left Column: Fault Scenarios + Traffic + Safety -->
+        <div class="workspace-left">
+          <!-- Fault Injection Scenarios -->
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h3>Fault Injection Scenarios</h3>
+                <p class="panel-desc">Trigger a production failure and watch IntelliTrace diagnose &amp; remediate</p>
+              </div>
+            </div>
+            <div id="scenarios-list" class="scenarios-list">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+
+          <!-- Synthetic Traffic Generator -->
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h3>Synthetic Traffic Generator</h3>
+                <p class="panel-desc">Target: <code>/service</code> E-Commerce API</p>
+              </div>
+              <span id="traffic-badge" class="badge-neutral">IDLE</span>
+            </div>
+            <div class="traffic-controls">
+              <div class="slider-row">
+                <label for="rps-slider">Target Load: <strong id="rps-value">15</strong> RPS</label>
+                <input type="range" id="rps-slider" min="5" max="100" value="15" />
+              </div>
+              <div class="btn-row">
+                <button id="btn-traffic-start" class="btn btn-primary">Start Traffic</button>
+                <button id="btn-traffic-stop" class="btn btn-danger" disabled>Stop Traffic</button>
+              </div>
+              <div class="traffic-stats">
+                <div><span>Sent</span><strong id="tf-sent">0</strong></div>
+                <div><span>Success</span><strong id="tf-ok" class="text-green">0</strong></div>
+                <div><span>Errors</span><strong id="tf-err" class="text-red">0</strong></div>
+                <div><span>Avg Latency</span><strong id="tf-lat">0 ms</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Safety Guardrails & Policy Tester -->
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h3>Safety Guardrails Engine</h3>
+                <p class="panel-desc">Strict whitelist &amp; max 2 remediation attempts per incident</p>
+              </div>
+            </div>
+            <div id="whitelist-pills" class="whitelist-pills"></div>
+            <div class="policy-tester">
+              <label for="policy-action-input">Test Action Policy</label>
+              <div class="policy-input-row">
+                <input type="text" id="policy-action-input" placeholder="e.g. SCALE_WORKERS or DROP_TABLE" />
+                <button id="btn-validate-policy" class="btn btn-secondary">Validate</button>
+              </div>
+              <div id="policy-result" class="policy-result hidden"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Triage Dossier -->
+        <div class="workspace-right">
+          <div class="panel dossier-panel">
+            <div class="panel-head">
+              <div>
+                <h3>Autonomous Triage Dossier</h3>
+                <p class="panel-desc" id="dossier-subtitle">Run a scenario or select a historical incident below to inspect its full trace</p>
+              </div>
+              <span id="dossier-status-badge" class="badge-neutral">Awaiting Incident</span>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs" role="tablist">
+              <button class="tab-btn active" data-tab="tab-diagnosis">Diagnosis &amp; Briefing</button>
+              <button class="tab-btn" data-tab="tab-actions">Actions &amp; Safety Audit</button>
+              <button class="tab-btn" data-tab="tab-metrics">Before vs After</button>
+              <button class="tab-btn" data-tab="tab-timeline">Execution Timeline</button>
+            </div>
+
+            <div id="dossier-empty" class="empty-state">
+              <div class="empty-icon">⚡</div>
+              <h4>No Incident Selected</h4>
+              <p>Click <strong>Investigate</strong> on any fault scenario to execute the LangGraph SRE pipeline, or click any row in the Historical Incident Log.</p>
+            </div>
+
+            <div id="dossier-content" class="dossier-content hidden">
+              <!-- Tab 1: Diagnosis -->
+              <div id="tab-diagnosis" class="tab-pane active">
+                <div class="diag-header">
+                  <div>
+                    <div class="diag-id" id="diag-id">INC-000</div>
+                    <h4 class="diag-title" id="diag-root-cause">--</h4>
+                  </div>
+                  <div class="diag-meta">
+                    <span class="badge-severity" id="diag-severity">CRITICAL</span>
+                    <span class="diag-time" id="diag-timestamps">--</span>
+                  </div>
+                </div>
+                <div class="briefing-box">
+                  <div class="briefing-label">AI SRE Plain-Language Briefing</div>
+                  <p id="diag-explanation">--</p>
+                </div>
+                <div id="diag-handover-box" class="handover-box hidden">
+                  <div class="handover-label">Human SRE Escalation Handover Dossier</div>
+                  <pre id="diag-handover-text"></pre>
+                </div>
+              </div>
+
+              <!-- Tab 2: Actions -->
+              <div id="tab-actions" class="tab-pane">
+                <div class="table-wrap">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Attempt</th>
+                        <th>Action</th>
+                        <th>Parameters</th>
+                        <th>Policy</th>
+                        <th>Status</th>
+                        <th>Message</th>
+                      </tr>
+                    </thead>
+                    <tbody id="actions-tbody"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Tab 3: Before vs After -->
+              <div id="tab-metrics" class="tab-pane">
+                <div id="delta-grid" class="delta-grid"></div>
+              </div>
+
+              <!-- Tab 4: Timeline -->
+              <div id="tab-timeline" class="tab-pane">
+                <div id="timeline-list" class="timeline-list"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Historical Incidents & Live Logs -->
+          <div class="bottom-grid">
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h3>Historical Incident Log</h3>
+                  <p class="panel-desc">Persisted in SQLite &amp; JSON • Click any row to inspect</p>
+                </div>
+                <span id="incidents-count" class="badge-neutral">0 total</span>
+              </div>
+              <div class="table-wrap scroll-y">
+                <table class="data-table clickable-rows">
+                  <thead>
+                    <tr>
+                      <th>Incident ID</th>
+                      <th>Scenario</th>
+                      <th>Root Cause</th>
+                      <th>Status</th>
+                      <th>Detected</th>
+                    </tr>
+                  </thead>
+                  <tbody id="incidents-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h3>Live Application Log Stream</h3>
+                  <p class="panel-desc">Real-time service telemetry events</p>
+                </div>
+                <select id="log-filter" class="select-compact" aria-label="Filter log level">
+                  <option value="ALL">All Levels</option>
+                  <option value="INFO">INFO</option>
+                  <option value="WARN">WARN</option>
+                  <option value="ERROR">ERROR</option>
+                  <option value="CRITICAL">CRITICAL</option>
+                </select>
+              </div>
+              <div id="log-stream" class="log-stream"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span><strong>IntelliTrace</strong> — Autonomous SRE &amp; Incident Intelligence Platform</span>
+      <span>Crafted by <strong>Gajraj Jangid</strong> • LangGraph StateGraph + FastAPI</span>
+    </footer>
+  </div>
+
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
+

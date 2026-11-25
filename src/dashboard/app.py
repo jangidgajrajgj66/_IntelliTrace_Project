@@ -1,5 +1,6 @@
 """
-Production Streamlit Web Dashboard for Autonomous AI Incident Investigator.
+Streamlit Web Dashboard for IntelliTrace.
+Author: Gajraj Jangid
 Features real-time telemetry charts, live synthetic traffic generation,
 LangGraph workflow visualization, and LLM-powered incident dossiers.
 """
@@ -26,8 +27,8 @@ from src.real_app.traffic_generator import TrafficGenerator
 
 # Streamlit Page Config
 st.set_page_config(
-    page_title="Autonomous AI Incident Investigator (LangGraph SRE)",
-    page_icon="🛡️",
+    page_title="IntelliTrace — Autonomous SRE & Incident Intelligence",
+    page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -111,8 +112,8 @@ for act in APPROVED_ACTIONS:
     st.sidebar.markdown(f"  • `{act}`")
 
 # --- Main Dashboard Header ---
-st.title("🛡️ Autonomous AI Incident Investigator")
-st.caption("Production SRE Agent Architecture • Powered by LangGraph, FastAPI & LLM Telemetry Reasoning")
+st.title("⚡ IntelliTrace — Autonomous SRE Console")
+st.caption("Crafted by Gajraj Jangid • Powered by LangGraph, FastAPI & LLM Telemetry Reasoning")
 
 # --- Section 1: Real-time Telemetry Cards ---
 metrics_df = st.session_state.service.get_metrics_df(limit=30)

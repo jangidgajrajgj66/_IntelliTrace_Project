@@ -1,6 +1,6 @@
 """
-Predefined failure scenarios for testing the Autonomous AI Incident Investigator.
-Directly implements scenarios from specification section 8.
+Predefined failure scenarios for IntelliTrace.
+Author: Gajraj Jangid
 """
 from dataclasses import dataclass
 from typing import List, Optional

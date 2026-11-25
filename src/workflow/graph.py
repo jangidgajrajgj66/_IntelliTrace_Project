@@ -1,5 +1,6 @@
 """
-LangGraph StateGraph Workflow Orchestrator for Autonomous AI Incident Investigator.
+LangGraph StateGraph Workflow Orchestrator for IntelliTrace.
+Author: Gajraj Jangid
 Implements the 5-station agent loop (Detect -> Investigate -> Safety -> Remediate -> Verify -> Escalate)
 as an explicit, stateful, auditable LangGraph graph.
 """
@@ -20,12 +21,13 @@ from src.storage.repository import IncidentRepository
 
 logger = get_logger("workflow.graph")
 
-class IncidentWorkflowState(TypedDict):
+class IncidentWorkflowState(TypedDict, total=False):
     """LangGraph state schema representing the full lifecycle of an incident."""
     incident_id: str
     scenario_id: str
     target_type: str  # "simulated" or "real_app"
     service_ref: Any
+    safety_ref: Any
     metrics_snapshot: Dict[str, Any]
     alert_data: Optional[Dict[str, Any]]
     is_healthy: bool
@@ -124,7 +126,7 @@ def investigate_node(state: IncidentWorkflowState) -> Dict[str, Any]:
 def safety_eval_node(state: IncidentWorkflowState) -> Dict[str, Any]:
     """Node 3: Safety Guardrails evaluation (whitelist, attempt budget, parameters)."""
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    safety = SafetyEngine(max_attempts=state["max_attempts"])
+    safety = state.get("safety_ref") or SafetyEngine(max_attempts=state["max_attempts"])
     inv = state["investigation_data"]
     attempts = state["attempt_count"]
 
@@ -171,29 +173,38 @@ def safety_eval_node(state: IncidentWorkflowState) -> Dict[str, Any]:
     }
 
 def remediate_node(state: IncidentWorkflowState) -> Dict[str, Any]:
-    """Node 4: Dispatches approved safe action to the application service."""
+    """Node 4: Dispatches approved safe action to the application service via SafetyEngine."""
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     service = state["service_ref"]
+    safety = state.get("safety_ref")
     action_info = state["current_action"]
     action_name = action_info["action_name"]
     params = action_info["parameters"]
 
     new_attempt = state["attempt_count"] + 1
 
-    # Execute on service
-    exec_ok, exec_msg = service.apply_action(action_name, params)
-
-    action_record = {
-        "action_id": str(uuid.uuid4())[:8],
-        "incident_id": state["incident_id"],
-        "attempt_number": new_attempt,
-        "action_name": action_name,
-        "parameters": params,
-        "is_approved": True,
-        "status": "EXECUTED" if exec_ok else "FAILED",
-        "execution_message": exec_msg,
-        "timestamp": ts,
-    }
+    if safety is not None:
+        record = safety.execute_action(
+            incident_id=state["incident_id"],
+            action_name=action_name,
+            parameters=params,
+            service=service,
+        )
+        action_record = record.to_dict()
+        exec_msg = record.execution_message
+    else:
+        exec_ok, exec_msg = service.apply_action(action_name, params)
+        action_record = {
+            "action_id": str(uuid.uuid4())[:8],
+            "incident_id": state["incident_id"],
+            "attempt_number": new_attempt,
+            "action_name": action_name,
+            "parameters": params,
+            "is_approved": True,
+            "status": "EXECUTED" if exec_ok else "FAILED",
+            "execution_message": exec_msg,
+            "timestamp": ts,
+        }
 
     actions_taken = list(state.get("actions_taken", []))
     actions_taken.append(action_record)

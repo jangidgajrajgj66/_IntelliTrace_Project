@@ -1,6 +1,7 @@
 """
-Detection Engine for Autonomous AI Incident Investigator.
-Monitors simulated service metrics and triggers alerts when SLA/SLO thresholds are breached.
+Detection Engine for IntelliTrace.
+Author: Gajraj Jangid
+Monitors service telemetry and triggers alerts when SLA/SLO thresholds are breached.
 """
 from dataclasses import dataclass, field, asdict
 from datetime import datetime

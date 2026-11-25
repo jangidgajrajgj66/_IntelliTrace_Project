@@ -1,5 +1,6 @@
 """
-Root Cause Analysis Engine for Autonomous AI Incident Investigator.
+Root Cause Analysis Engine for IntelliTrace.
+Author: Gajraj Jangid
 Reads metric trends and structured logs to deduce the underlying fault with evidence.
 """
 from dataclasses import dataclass, field, asdict

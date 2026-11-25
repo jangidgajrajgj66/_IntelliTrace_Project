@@ -1,16 +1,26 @@
-# Autonomous AI Incident Investigator (Production SRE Agent)
+# IntelliTrace — Autonomous SRE & Incident Intelligence Platform
 
+[![Author](https://img.shields.io/badge/Author-Gajraj%20Jangid-6366f1.svg)]()
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-2.0.0-009688.svg)](https://fastapi.tiangolo.com/)
 [![LangGraph](https://img.shields.io/badge/Orchestrator-LangGraph%20StateGraph-orange.svg)](https://langchain-ai.github.io/langgraph/)
-[![Tests](https://img.shields.io/badge/Tests-28%20Passed-brightgreen.svg)](https://pytest.org/)
 [![Safety](https://img.shields.io/badge/Safety%20Guardrails-Strict%20Whitelist-red.svg)]()
 
-A production-ready, industry-grade **Autonomous Incident Investigator** acting as a **Junior On-Call Site Reliability Engineer (SRE)**. Built with **LangGraph StateGraph**, **FastAPI**, and **LLM Telemetry Reasoning**, this system continuously monitors application health, detects SLA breaches, performs root cause analysis with evidence, executes whitelisted safe remediations, verifies system recovery, and escalates to human engineers when necessary.
+**IntelliTrace** is an autonomous Site Reliability Engineering (SRE) and incident intelligence platform crafted by **Gajraj Jangid**. Built with **LangGraph StateGraph**, **FastAPI**, **LLM Telemetry Reasoning**, and a modern **HTML/CSS/JavaScript Web Console**, IntelliTrace continuously monitors application health, detects SLA breaches, performs evidence-backed root cause analysis, executes whitelisted safe remediations, verifies system recovery, and escalates unrecoverable outages to human engineers.
 
 ---
 
-## 🏛️ System Architecture
+## Screenshots & Live Telemetry Graphs
+
+### IntelliTrace Web Console (KPIs, Live SLA Charts & LangGraph Pipeline)
+![IntelliTrace Dashboard Overview](docs/screenshots/dashboard_overview.png)
+
+### Full SRE Workspace (Fault Scenarios, Triage Dossier & Historical Incident Log)
+![IntelliTrace Full Workspace](docs/screenshots/dashboard_full.png)
+
+---
+
+## Architecture
 
 ```mermaid
 flowchart TD
@@ -40,176 +50,98 @@ flowchart TD
 
 ---
 
-## 🌟 Key Capabilities
+## Key Capabilities
 
-### 1. LangGraph StateGraph Orchestration
-The incident investigation loop is modeled as a stateful, typed LangGraph graph (`IncidentWorkflowState`):
-- **`detect_node`**: Moving average and Z-score anomaly detection against SLA thresholds.
+### 1. Modern IntelliTrace Web Console (`src/web/`)
+- Served directly by FastAPI at `http://127.0.0.1:8000/` (or `/dashboard`).
+- Real-time KPI cards, HTML5 Canvas telemetry charts with SLA threshold overlays, interactive LangGraph pipeline tracker, one-click fault injection, synthetic traffic generator controls, safety policy validator, tabbed triage dossier, historical incident inspector, and live log stream.
+
+### 2. LangGraph StateGraph Orchestration (`src/workflow/`)
+- **`detect_node`**: Moving-average anomaly detection against SLA thresholds.
 - **`investigate_node`**: Evidence extraction from telemetry and structured logs.
 - **`safety_eval_node`**: Enforces action whitelist, parameter boundaries, and remediation budgets.
-- **`remediate_node`**: Dispatches safe operational actions to the target application.
+- **`remediate_node`**: Dispatches safe operational actions through `SafetyEngine` with full audit logging.
 - **`verify_node`**: Evaluates stabilization telemetry to confirm SLA recovery.
 - **`escalate_node`**: Synthesizes an executive SRE handover dossier when automated attempts are exhausted.
 
-### 2. Multi-Provider LLM Telemetry Reasoning
-- **Pluggable LLM Engine**: Supports OpenAI (`gpt-4o-mini`), Google Gemini (`gemini-1.5-flash`), or local Ollama instances when configured in environment variables.
-- **Deterministic Heuristic Bedrock**: Guaranteed offline, zero-cost, high-precision classification for reliable CPU execution without external API dependencies.
-- **Structured Pydantic Schemas**: Strict output validation for root causes, confidence scores, and evidence citations.
+### 3. Multi-Provider LLM Telemetry Reasoning (`src/investigator/`)
+- Supports OpenAI (`gpt-4o-mini`), Google Gemini (`gemini-1.5-flash`), or local Ollama instances via environment variables.
+- Includes a deterministic offline heuristic reasoning engine for zero-cost, reliable execution without external API keys.
 
-### 3. Real FastAPI E-Commerce Application (`src/real_app/`)
-- Production-style shopping web service handling `/catalog`, `/orders`, and `/health`.
-- Real-time `/metrics` telemetry endpoint emitting response times, error rates, queue depths, and worker concurrency.
-- SRE administrative endpoints (`/faults/inject`, `/faults/reset`, `/admin/remediate`).
-- Built-in asynchronous **Synthetic Traffic Generator** simulating concurrent customer browsing and orders.
-
-### 4. Investigator REST API (`src/api/server.py`)
-- OpenAPI documentation at `http://localhost:8000/docs`.
-- REST endpoints for live telemetry, triggering LangGraph workflows, historical incident retrieval, and safety audit querying.
-
-### 5. Strict SRE Safety Guardrails
+### 4. Strict SRE Safety Guardrails (`src/safety/`)
 - **Action Whitelist**: `SCALE_WORKERS`, `ROLLBACK_CONFIG`, `CLEAR_CACHE`, `RESTART_SERVICE`, `DRAIN_QUEUE`, `ENABLE_RATE_LIMITING`.
-- **Zero Arbitrary Execution**: Malicious commands (`rm -rf`, `DROP TABLE`, arbitrary shell scripts) trigger immediate `SECURITY VIOLATION` alerts and are blocked.
-- **Remediation Attempt Budget**: Capped at **2 attempts** per incident to prevent cascading outages.
-- **Auditable Log**: All actions recorded in SQLite (`incidents.db`), flat JSON (`incident_records.json`), and `audit_trail.log`.
+- **Zero Arbitrary Execution**: Unapproved commands are blocked immediately and logged to `data/audit_trail.log`.
+- **Remediation Budget**: Capped at **2 attempts** per incident to prevent cascading outages.
 
 ---
 
-## 🧪 Repeatable Failure Scenarios
+## Repeatable Failure Scenarios
 
 | Scenario | Simulated Anomaly | Diagnosed Root Cause | Approved Safe Action | Result |
 | :--- | :--- | :--- | :--- | :--- |
-| **1. Request Queue Too Long** | Traffic surge exhausts worker concurrency | `Request Queue Bottleneck (Worker Starvation)` | `SCALE_WORKERS` | **RESOLVED** (Queue: 129 → 2 reqs) |
-| **2. High Error Rate** | Bad configuration deployment (`v2.5.0-bad`) triggers 500s | `Faulty Configuration Deployment` | `ROLLBACK_CONFIG` | **RESOLVED** (Errors: 33.7% → 0.4%) |
-| **3. Slow Response Time** | Cache fragmentation & database locks spike latency > 1800ms | `Cache Saturation & Lock Contention` | `CLEAR_CACHE` | **RESOLVED** (Latency: 2353ms → 113ms) |
-| **4. Unfixable Outage** | Downstream payment provider ECONNRESET + storage array crash | `Fatal External Infrastructure Outage` | Attempts restart, halts at budget | **ESCALATED** (100% handover to human) |
+| **1. Request Queue Too Long** | Traffic surge exhausts worker concurrency | `Request Queue Bottleneck (Worker Starvation)` | `SCALE_WORKERS` | **RESOLVED** |
+| **2. High Error Rate** | Bad config deployment (`v2.5.0-bad`) triggers 500s | `Faulty Configuration Deployment` | `ROLLBACK_CONFIG` | **RESOLVED** |
+| **3. Slow Response Time** | Cache fragmentation & DB locks spike latency > 1800ms | `Cache Saturation & Database Lock Contention` | `CLEAR_CACHE` | **RESOLVED** |
+| **4. Unfixable Outage** | External payment provider ECONNRESET + storage array crash | `Fatal External Infrastructure & Hardware Outage` | Attempts restart, halts at budget | **ESCALATED** |
 
 ---
 
-## 🚀 Quick Start with `run.bat`
+## Quick Start
 
-The included `run.bat` script automates Python validation, virtual environment management, dependency installation, and stack startup on Windows.
+### macOS / Linux (`run.sh`)
+```bash
+chmod +x run.sh
+./run.sh --api        # Start IntelliTrace Server + Web Console (http://127.0.0.1:8000)
+./run.sh --all        # Run all 4 scenarios and display CLI scorecard
+./run.sh --test       # Run pytest suite
+./run.sh --dashboard  # Launch optional Streamlit dashboard
+```
 
-### Method 1: Interactive Control Center
-Double-click `run.bat` or run:
+### Windows (`run.bat`)
 ```cmd
-run.bat
-```
-Menu options:
-```
-============================================================================
-       AUTONOMOUS AI INCIDENT INVESTIGATOR (Production SRE Agent)
-       Powered by: LangGraph StateGraph • FastAPI • LLM Reasoning
-============================================================================
- [1] Run All Scenarios & Full LangGraph Evaluation (CLI Scorecard)
- [2] Start Full Stack (FastAPI Server + Streamlit Web Dashboard)
- [3] Start FastAPI Server Only (Port 8000: API + E-Commerce App)
- [4] Launch Streamlit Web Dashboard Only (Port 8501)
- [5] Run Comprehensive Pytest Suite (28 Unit & Integration Tests)
- [6] Run Synthetic Customer Traffic Generator (Load Test)
- [7] Run Scenario 1: Request Queue Bottleneck (High Latency)
- [8] Run Scenario 2: High Error Rate (Bad Config Deployment)
- [9] Run Scenario 3: Slow Response Time (Cache Saturation)
- [10] Run Scenario 4: Unrecoverable Outage (Human SRE Escalation)
- [11] Exit
-============================================================================
-```
-
-### Method 2: Direct Command-Line Execution
-```cmd
-# Run all 4 scenarios through LangGraph and display SRE Scorecard
-run.bat --all
-
-# Start the FastAPI Server (http://127.0.0.1:8000)
 run.bat --api
-
-# Launch the Streamlit Web Dashboard (http://localhost:8501)
-run.bat --dashboard
-
-# Run the complete test suite (28 tests)
+run.bat --all
 run.bat --test
+```
 
-# Run synthetic traffic generator for load testing
-run.bat --traffic
-
-# Test an individual failure scenario
-run.bat --scenario queue
-run.bat --scenario error
-run.bat --scenario latency
-run.bat --scenario unfixable
+### Direct Python CLI
+```bash
+python3 main.py --api
+python3 main.py --all
+python3 main.py --scenario queue
 ```
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 ```
-d:\personal_project\
-├── Incident_Investigator_Detailed_With_Tech_Stack.docx  # Original specifications
-├── requirements.txt                                    # Production dependencies
-├── config.py                                           # Production thresholds, ports & safety bounds
-├── run.bat                                             # Windows batch automation script
-├── main.py                                             # Unified CLI and evaluation runner
-├── README.md                                           # Production documentation
+IntelliTrace/
+├── config.py                     # Thresholds, ports, branding & safety bounds
+├── main.py                       # Unified CLI and evaluation runner
+├── requirements.txt              # Python dependencies
+├── run.sh / run.bat              # Cross-platform startup scripts
+├── .env.example                  # Environment configuration template
 ├── src/
-│   ├── api/
-│   │   ├── __init__.py
-│   │   └── server.py                                   # FastAPI Investigator REST API Server
-│   ├── real_app/
-│   │   ├── __init__.py
-│   │   ├── api.py                                      # Real FastAPI E-Commerce application
-│   │   └── traffic_generator.py                        # Synthetic customer load generator
-│   ├── fake_app/
-│   │   ├── models.py                                   # Telemetry and state data models
-│   │   ├── scenarios.py                                # Predefined failure scenarios
-│   │   └── service.py                                  # Simulated service handler
-│   ├── monitor/
-│   │   └── detector.py                                 # Telemetry SLA breach and anomaly detector
-│   ├── investigator/
-│   │   ├── cause_finder.py                             # Rule-based diagnostic correlation
-│   │   ├── explainer.py                                # Plain-language briefer
-│   │   └── llm_investigator.py                         # Multi-provider LLM root cause investigator
-│   ├── safety/
-│   │   └── safety_engine.py                            # Whitelist, budget & parameter guardrails
-│   ├── storage/
-│   │   ├── db.py                                       # SQLite database manager
-│   │   └── repository.py                               # DB and flat JSON persistence
-│   ├── workflow/
-│   │   ├── graph.py                                    # LangGraph StateGraph agent definition
-│   │   └── loop.py                                     # Autonomous loop orchestrator
-│   ├── dashboard/
-│   │   └── app.py                                      # Upgraded Streamlit interactive dashboard
-│   └── utils/
-│       └── logger.py                                   # Structured logging with file rotation
-├── tests/
-│   ├── test_api_server.py                              # FastAPI Investigator endpoints test
-│   ├── test_detector.py                                # Threshold and breach detection tests
-│   ├── test_langgraph.py                               # LangGraph StateGraph execution tests
-│   ├── test_llm_investigator.py                        # LLM reasoning and evidence tests
-│   ├── test_real_app.py                                # Real FastAPI e-commerce app tests
-│   ├── test_safety.py                                  # Action whitelist and security tests
-│   ├── test_scenarios.py                               # End-to-end scenario integration tests
-│   └── test_workflow.py                                # Lifecycle and persistence tests
-└── data/
-    ├── incidents.db                                    # SQLite historical incident database
-    ├── incident_records.json                           # Flat JSON export of incidents
-    └── audit_trail.log                                 # SRE action audit trail
+│   ├── web/                      # Modern HTML/CSS/JS IntelliTrace Web Console
+│   │   ├── index.html
+│   │   ├── styles.css
+│   │   └── app.js
+│   ├── api/server.py             # FastAPI REST API + Web Console host
+│   ├── real_app/                 # FastAPI E-Commerce service & traffic generator
+│   ├── fake_app/                 # Simulated telemetry service & failure scenarios
+│   ├── monitor/detector.py       # SLA breach & anomaly detector
+│   ├── investigator/             # LLM & heuristic root cause engines
+│   ├── safety/safety_engine.py   # Whitelist, budget & parameter guardrails
+│   ├── storage/                  # SQLite + JSON incident persistence
+│   ├── workflow/                 # LangGraph StateGraph & loop orchestrator
+│   ├── dashboard/app.py          # Optional Streamlit dashboard
+│   └── utils/logger.py           # Structured rotating logger
+└── tests/                        # Unit & integration test suite
 ```
 
 ---
 
-## 📊 Specification Success Scorecard
+## Author
 
-```
-========================================================================
-                   SPECIFICATION SUCCESS SCORECARD                      
-========================================================================
- Orchestrator:                     LangGraph StateGraph
- LLM Reasoning Engine:             auto (gemini-1.5-flash / deterministic fallback)
- Total Scenarios Tested:           4
- Auto-Resolved (Fixable Issues):   3/3 (100% of fixable scenarios)
- Correctly Escalated to Human:    1/1 (100% of unfixable scenarios)
- Safety Violations (Unapproved):   0 (Strict Target: ZERO)
- Max Remediation Budget Limit:     YES (Strict limit: 2 attempts)
- Test Suite:                       28/28 Passed (100% Coverage)
-========================================================================
-```
+**Gajraj Jangid**

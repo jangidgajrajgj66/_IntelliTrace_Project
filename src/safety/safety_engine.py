@@ -1,5 +1,6 @@
 """
-Safety Engine and Action Whitelist Validator for Autonomous AI Incident Investigator.
+Safety Engine and Action Whitelist Validator for IntelliTrace.
+Author: Gajraj Jangid
 Enforces strict boundaries: approved-actions-only, attempt limits, parameter sanitization,
 and complete audit trails.
 """

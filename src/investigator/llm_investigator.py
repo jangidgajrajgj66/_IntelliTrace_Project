@@ -1,5 +1,6 @@
 """
-LLM-Powered Root Cause Investigator for Autonomous Incident Response.
+LLM-Powered Root Cause Investigator for IntelliTrace.
+Author: Gajraj Jangid
 Integrates Large Language Model reasoning with fallback to deterministic heuristic analysis,
 producing structured Pydantic evidence-backed incident diagnoses.
 """

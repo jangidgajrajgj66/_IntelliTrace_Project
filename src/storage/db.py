@@ -1,5 +1,6 @@
 """
-SQLite Database Manager for Autonomous AI Incident Investigator.
+SQLite Database Manager for IntelliTrace.
+Author: Gajraj Jangid
 Stores structured incidents, applied actions, and audit logs.
 """
 import sqlite3

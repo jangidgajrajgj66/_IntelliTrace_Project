@@ -1,5 +1,6 @@
 """
-Structured Logger for Autonomous AI Incident Investigator.
+Structured Logger for IntelliTrace.
+Author: Gajraj Jangid
 Provides unified console and file logging with severity formatting,
 traceability, and rotation.
 """

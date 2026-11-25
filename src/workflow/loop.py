@@ -1,5 +1,6 @@
 """
-Autonomous Workflow Loop Orchestrator powered by LangGraph.
+IntelliTrace Workflow Loop Orchestrator powered by LangGraph.
+Author: Gajraj Jangid
 Coordinates the 5 operational stations:
 1. Detect -> 2. Investigate (LLM) -> 3. Safety -> 4. Fix -> 5. Verify -> 6. Escalate / Resolve.
 """
@@ -45,7 +46,7 @@ class IncidentLifecycleResult:
 
 class AutonomousInvestigator:
     """
-    Production-grade Autonomous Incident Investigator powered by LangGraph.
+    IntelliTrace Autonomous SRE Engine powered by LangGraph.
     Monitors services, triggers LLM-guided root cause investigation, applies safe
     remediations via strict safety policies, and escalates safely.
     """
@@ -70,6 +71,7 @@ class AutonomousInvestigator:
         """
         Executes an end-to-end incident lifecycle using the LangGraph StateGraph.
         """
+        start_ts = time.time()
         # Step 0: Fault Injection
         if scenario_id in SCENARIOS:
             self.service.inject_fault(scenario_id)
@@ -90,6 +92,7 @@ class AutonomousInvestigator:
             "scenario_id": scenario_id,
             "target_type": "simulated",
             "service_ref": self.service,
+            "safety_ref": self.safety_engine,
             "metrics_snapshot": before_metrics,
             "alert_data": None,
             "is_healthy": True,
@@ -150,7 +153,7 @@ class AutonomousInvestigator:
             "severity": result.severity,
             "detection_timestamp": result.detected_at,
             "resolution_timestamp": result.resolved_at,
-            "duration_seconds": 12.0,
+            "duration_seconds": round(time.time() - start_ts, 3),
             "before_metrics": before_metrics,
             "after_metrics": after_metrics,
             "explanation": explanation + (f"\n\n{handover}" if handover else ""),
@@ -160,3 +163,6 @@ class AutonomousInvestigator:
             self.repository.record_action(act)
 
         return result
+
+
+IntelliTraceEngine = AutonomousInvestigator

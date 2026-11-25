@@ -1,10 +1,16 @@
 """
-Production Configuration for Autonomous AI Incident Investigator.
+IntelliTrace — Production Configuration.
+Author: Gajraj Jangid
 Defines system thresholds, safety boundaries, storage paths, API endpoints,
-and LLM configuration for industry-level operations.
+and LLM configuration for autonomous SRE incident investigation.
 """
 import os
 from pathlib import Path
+
+APP_NAME = "IntelliTrace"
+APP_VERSION = "2.0.0"
+APP_AUTHOR = "Gajraj Jangid"
+APP_DESCRIPTION = "Autonomous SRE & Incident Intelligence Platform"
 
 # Base Directory Paths
 BASE_DIR = Path(__file__).resolve().parent

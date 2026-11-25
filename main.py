@@ -1,7 +1,8 @@
 """
-Autonomous AI Incident Investigator - CLI & Simulation Runner.
+IntelliTrace — CLI & Simulation Runner.
+Author: Gajraj Jangid
 Production entry point for command-line execution, LangGraph agent evaluation,
-FastAPI server startup, and Streamlit dashboard.
+FastAPI server + Web Console startup, and Streamlit dashboard.
 """
 import sys
 import argparse
@@ -36,7 +37,8 @@ RESET = "\033[0m"
 def print_banner():
     print(f"""
 {CYAN}{BOLD}========================================================================
-       AUTONOMOUS AI INCIDENT INVESTIGATOR (Production SRE Agent)
+       INTELLITRACE — Autonomous SRE & Incident Intelligence Platform
+       Author: Gajraj Jangid
        Powered by: LangGraph StateGraph • FastAPI • LLM Reasoning
        Pipeline: Detect -> Investigate (LLM) -> Safety -> Remediate -> Verify -> Escalate
 ========================================================================{RESET}
@@ -123,8 +125,8 @@ def run_all_scenarios():
     print(f"{CYAN}{BOLD}========================================================================{RESET}\n")
 
 def start_api_server():
-    print(f"{CYAN}Starting FastAPI Server on http://{API_HOST}:{API_PORT}...{RESET}")
-    print(f"{GREEN}Endpoints: API Docs at http://{API_HOST}:{API_PORT}/docs | Live Service at http://{API_HOST}:{API_PORT}/service{RESET}")
+    print(f"{CYAN}Starting IntelliTrace Server on http://{API_HOST}:{API_PORT}...{RESET}")
+    print(f"{GREEN}Web Console: http://{API_HOST}:{API_PORT}/ | API Docs: http://{API_HOST}:{API_PORT}/docs | Live Service: http://{API_HOST}:{API_PORT}/service{RESET}")
     import uvicorn
     uvicorn.run("src.api.server:app", host=API_HOST, port=API_PORT, reload=False)
 
@@ -152,7 +154,7 @@ def run_traffic_generator(rps: int = 15, duration_seconds: int = 30):
         gen.stop()
 
 def main():
-    parser = argparse.ArgumentParser(description="Autonomous AI Incident Investigator (LangGraph SRE Agent)")
+    parser = argparse.ArgumentParser(description="IntelliTrace — Autonomous SRE & Incident Intelligence Platform (by Gajraj Jangid)")
     parser.add_argument(
         "--scenario",
         choices=["queue_bottleneck", "high_error_rate", "slow_response", "unfixable_outage", "queue", "error", "latency", "unfixable"],

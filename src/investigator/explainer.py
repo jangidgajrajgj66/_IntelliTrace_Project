@@ -1,6 +1,7 @@
 """
-Plain-language Explanation Generator for Autonomous AI Incident Investigator.
-Translates technical metrics and logs into a simple, clear briefing for humans.
+Plain-language Explanation Generator for IntelliTrace.
+Author: Gajraj Jangid
+Translates technical metrics and logs into a simple, clear briefing for engineers.
 """
 from typing import Dict, Any
 from src.investigator.cause_finder import InvestigationReport
